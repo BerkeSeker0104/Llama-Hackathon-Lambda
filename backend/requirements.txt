@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+groq
+langchain-groq
+langchain-core
+firebase-admin
+llama-cloud-services
+python-multipart
+python-dotenv
+pydantic>=2.7.4
