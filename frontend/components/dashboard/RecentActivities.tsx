@@ -10,23 +10,23 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
   const getActivityIcon = (type: RecentActivity['type']) => {
     switch (type) {
       case 'task_completed':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-[#38FF5D]" />;
       case 'task_assigned':
-        return <UserPlus className="h-4 w-4 text-blue-600" />;
+        return <UserPlus className="h-4 w-4 text-[#00A8FF]" />;
       case 'project_created':
-        return <FolderPlus className="h-4 w-4 text-purple-600" />;
+        return <FolderPlus className="h-4 w-4 text-[#8B5CF6]" />;
       case 'sprint_started':
-        return <PlayCircle className="h-4 w-4 text-orange-600" />;
+        return <PlayCircle className="h-4 w-4 text-[#F59E0B]" />;
       default:
-        return <CheckCircle2 className="h-4 w-4 text-gray-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-white/60" />;
     }
   };
 
   return (
-    <Card>
+    <Card className="bg-black border-white/10">
       <CardHeader>
-        <CardTitle>Son Aktiviteler</CardTitle>
-        <CardDescription>Sistemdeki son hareketler</CardDescription>
+        <CardTitle className="text-white">Son Aktiviteler</CardTitle>
+        <CardDescription className="text-white/60">Sistemdeki son hareketler</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -36,10 +36,10 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
                 {getActivityIcon(activity.type)}
               </div>
               <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
+                <p className="text-sm font-medium leading-none text-white">
                   {activity.description}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-white/60">
                   <span>{activity.timestamp}</span>
                   {activity.employee && (
                     <>

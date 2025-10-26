@@ -10,27 +10,34 @@ interface EmployeePerformanceChartProps {
 
 export function EmployeePerformanceChart({ data }: EmployeePerformanceChartProps) {
   return (
-    <Card>
+    <Card className="bg-black border-white/10">
       <CardHeader>
-        <CardTitle>Çalışan Performansı</CardTitle>
-        <CardDescription>Çalışanların tamamladığı ve aktif görevleri</CardDescription>
+        <CardTitle className="text-white">Çalışan Performansı</CardTitle>
+        <CardDescription className="text-white/60">Çalışanların tamamladığı ve aktif görevleri</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
             <XAxis 
               dataKey="name" 
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: '#ffffff60' }}
               angle={-45}
               textAnchor="end"
               height={100}
             />
-            <YAxis />
-            <Tooltip />
+            <YAxis tick={{ fill: '#ffffff60' }} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#1a1a1a', 
+                border: '1px solid #ffffff1a',
+                borderRadius: '8px',
+                color: '#ffffff'
+              }} 
+            />
             <Legend />
-            <Bar dataKey="completedTasks" fill="#10b981" name="Tamamlanan Görevler" />
-            <Bar dataKey="activeTasks" fill="#3b82f6" name="Aktif Görevler" />
+            <Bar dataKey="completedTasks" fill="#38FF5D" name="Tamamlanan Görevler" />
+            <Bar dataKey="activeTasks" fill="#00A8FF" name="Aktif Görevler" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

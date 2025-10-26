@@ -215,22 +215,30 @@ def list_projects():
     """
     print(f"[Tool Log] 'list_projects' çağrıldı")
     
-    projects = _db_instance.list_projects()
-    active_project_id = _db_instance.get_active_project(_session_id)
-    
-    result = {
-        "total_projects": len(projects),
-        "active_project_id": active_project_id,
-        "projects": [
-            {
-                "project_id": p.get("project_id"),
-                "project_name": p.get("project_name", "N/A"),
-                "detailedDescription": p.get("detailedDescription", "N/A")[:150]
-            }
-            for p in projects
-        ]
-    }
-    return json.dumps(result, ensure_ascii=False)
+    try:
+        if not _db_instance:
+            return json.dumps({"error": "Database connection not available"}, ensure_ascii=False)
+        
+        projects = _db_instance.list_projects()
+        active_project_id = _db_instance.get_active_project(_session_id)
+        
+        result = {
+            "total_projects": len(projects),
+            "active_project_id": active_project_id,
+            "projects": [
+                {
+                    "project_id": p.get("project_id"),
+                    "project_name": p.get("project_name", "N/A"),
+                    "detailedDescription": p.get("detailedDescription", "N/A")[:150]
+                }
+                for p in projects
+            ]
+        }
+        print(f"[Tool Log] 'list_projects' completed: {len(projects)} projects found")
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        print(f"[Tool Log ERROR] 'list_projects' failed: {e}")
+        return json.dumps({"error": f"Failed to list projects: {str(e)}"}, ensure_ascii=False)
 
 
 @tool

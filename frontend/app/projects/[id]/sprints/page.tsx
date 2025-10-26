@@ -15,7 +15,10 @@ import {
   TrendingUp,
   Calendar,
   RefreshCw,
+  Settings,
+  ExternalLink,
 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function SprintDashboardPage({
   params,
@@ -119,15 +122,15 @@ export default function SprintDashboardPage({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild className="text-white hover:bg-white/10">
           <Link href={`/projects/${projectId}`}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">Sprint Yönetimi</h1>
+        <h1 className="text-3xl font-bold text-white">Sprint Yönetimi</h1>
       </div>
 
       {/* Actions */}
@@ -135,6 +138,7 @@ export default function SprintDashboardPage({
         <Button
           onClick={() => generateSprintMutation.mutate()}
           disabled={generateSprintMutation.isPending}
+          className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90"
         >
           <Calendar className="mr-2 h-4 w-4" />
           {generateSprintMutation.isPending ? 'Oluşturuluyor...' : 'Sprint Planı Oluştur'}
@@ -155,6 +159,7 @@ export default function SprintDashboardPage({
               setIsRefreshing(false);
             }
           }}
+          className="border-white/10 text-white hover:bg-white/5"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           {isRefreshing ? 'Yenileniyor...' : 'Analizi Yenile'}
@@ -163,33 +168,34 @@ export default function SprintDashboardPage({
 
       {sprintsLoading ? (
         <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-muted rounded"></div>
-          <div className="h-64 bg-muted rounded"></div>
+          <div className="h-32 bg-white/10 rounded"></div>
+          <div className="h-64 bg-white/10 rounded"></div>
         </div>
       ) : generateSprintMutation.isPending ? (
-        <Card className="p-12 text-center">
+        <Card className="p-12 text-center bg-black border-white/10">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <h3 className="text-lg font-semibold">Sprint Planı Oluşturuluyor...</h3>
-            <p className="text-sm text-muted-foreground">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#38FF5D]"></div>
+            <h3 className="text-lg font-semibold text-white">Sprint Planı Oluşturuluyor...</h3>
+            <p className="text-sm text-white/60">
               AI görevleri analiz ediyor ve sprint&apos;lere dağıtıyor
             </p>
           </div>
         </Card>
       ) : sprints.length === 0 ? (
-        <Card className="p-12 text-center">
-          <h3 className="text-lg font-semibold mb-2">Sprint Planı Bulunamadı</h3>
-          <p className="text-muted-foreground mb-4">
+        <Card className="p-12 text-center bg-black border-white/10">
+          <h3 className="text-lg font-semibold mb-2 text-white">Sprint Planı Bulunamadı</h3>
+          <p className="text-white/60 mb-4">
             Başlamak için bir sprint planı oluşturun
           </p>
           <Button 
             onClick={() => generateSprintMutation.mutate()}
             disabled={generateSprintMutation.isPending}
+            className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90"
           >
             {generateSprintMutation.isPending ? 'Oluşturuluyor...' : 'Sprint Planı Oluştur'}
           </Button>
           {generateSprintMutation.isError && (
-            <p className="text-red-600 text-sm mt-4">
+            <p className="text-red-400 text-sm mt-4">
               ❌ Hata: {generateSprintMutation.error instanceof Error ? generateSprintMutation.error.message : 'Bilinmeyen hata'}
             </p>
           )}
@@ -200,17 +206,23 @@ export default function SprintDashboardPage({
           <div className="lg:col-span-2 space-y-6">
             {/* Sprint Health Card */}
             {healthData?.analysis && (
-              <Card>
+              <Card className="bg-black border-white/10">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <Activity className="h-5 w-5" />
                       Sprint Sağlık Durumu
                     </CardTitle>
                     <div
-                      className={`text-3xl font-bold ${getHealthColor(
-                        healthData.analysis.health_score
-                      )}`}
+                      className={`text-3xl font-bold ${
+                        healthData.analysis.health_score >= 80
+                          ? 'text-[#38FF5D]'
+                          : healthData.analysis.health_score >= 60
+                          ? 'text-yellow-400'
+                          : healthData.analysis.health_score >= 40
+                          ? 'text-orange-400'
+                          : 'text-red-400'
+                      }`}
                     >
                       {healthData.analysis.health_score}/100
                     </div>
@@ -219,29 +231,29 @@ export default function SprintDashboardPage({
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <span className="text-sm font-medium">Durum: </span>
+                      <span className="text-sm font-medium text-white">Durum: </span>
                       <Badge
                         className={
                           healthData.analysis.status === 'healthy'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-[#38FF5D]/20 text-[#38FF5D] border-[#38FF5D]/30'
                             : healthData.analysis.status === 'warning'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                            : 'bg-red-500/20 text-red-400 border-red-500/30'
                         }
                       >
                         {healthData.analysis.status}
                       </Badge>
                     </div>
                     <div>
-                      <span className="text-sm font-medium">Tamamlanma Oranı: </span>
-                      <span className="text-lg font-semibold">
+                      <span className="text-sm font-medium text-white">Tamamlanma Oranı: </span>
+                      <span className="text-lg font-semibold text-white">
                         {(healthData.analysis.completion_rate * 100).toFixed(0)}%
                       </span>
                     </div>
                     {healthData.analysis.predicted_outcome && (
-                      <div className="bg-muted p-3 rounded-lg">
-                        <p className="text-sm font-medium mb-1">Tahmin:</p>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <p className="text-sm font-medium mb-1 text-white">Tahmin:</p>
+                        <p className="text-sm text-white/60">
                           {healthData.analysis.predicted_outcome}
                         </p>
                       </div>
@@ -253,20 +265,20 @@ export default function SprintDashboardPage({
 
             {/* Calendar */}
             {calendarLoading && (
-              <Card>
+              <Card className="bg-black border-white/10">
                 <CardContent className="py-12 text-center">
-                  <div className="animate-pulse">Takvim yükleniyor...</div>
+                  <div className="animate-pulse text-white/60">Takvim yükleniyor...</div>
                 </CardContent>
               </Card>
             )}
             {calendarError && (
-              <Card className="border-red-300 bg-red-50">
+              <Card className="border-red-500/30 bg-red-500/10">
                 <CardContent className="py-6">
-                  <p className="text-red-800 font-medium">❌ Takvim yüklenirken hata oluştu</p>
-                  <p className="text-sm text-red-600 mt-2">
+                  <p className="text-red-400 font-medium">❌ Takvim yüklenirken hata oluştu</p>
+                  <p className="text-sm text-red-300 mt-2">
                     {calendarError instanceof Error ? calendarError.message : 'Bilinmeyen hata'}
                   </p>
-                  <p className="text-xs text-red-500 mt-2">Backend konsolunu kontrol edin</p>
+                  <p className="text-xs text-red-400 mt-2">Backend konsolunu kontrol edin</p>
                 </CardContent>
               </Card>
             )}
@@ -277,46 +289,57 @@ export default function SprintDashboardPage({
           <div className="space-y-6">
             {/* Risk Factors */}
             {riskData?.analysis && (
-              <Card>
+              <Card className="bg-black border-white/10">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <AlertTriangle className="h-5 w-5 text-orange-400" />
                     Proje Riskleri
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <span className="text-sm font-medium">Risk Seviyesi: </span>
+                      <span className="text-sm font-medium text-white">Risk Seviyesi: </span>
                       <Badge
-                        className={getRiskColor(riskData.analysis.overall_delay_risk)}
+                        className={
+                          riskData.analysis.overall_delay_risk === 'critical'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : riskData.analysis.overall_delay_risk === 'high'
+                            ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                            : riskData.analysis.overall_delay_risk === 'medium'
+                            ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                            : 'bg-[#38FF5D]/20 text-[#38FF5D] border-[#38FF5D]/30'
+                        }
                       >
                         {riskData.analysis.overall_delay_risk}
                       </Badge>
                     </div>
                     {riskData.analysis.estimated_delay_days > 0 && (
-                      <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-                        <p className="text-sm font-medium text-red-800">
+                      <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+                        <p className="text-sm font-medium text-red-400">
                           Tahmini Gecikme: {riskData.analysis.estimated_delay_days} gün
                         </p>
                       </div>
                     )}
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Risk Faktörleri:</h4>
+                      <h4 className="text-sm font-medium mb-2 text-white">Risk Faktörleri:</h4>
                       <div className="space-y-2">
                         {riskData.analysis.risk_factors.map((risk: { type: string; severity: string; description: string; impact_score: number }, i: number) => (
                           <div
                             key={i}
-                            className={`border p-2 rounded-lg ${getRiskColor(
-                              risk.severity
-                            )}`}
+                            className={`border p-2 rounded-lg ${
+                              risk.severity === 'critical'
+                                ? 'bg-red-500/10 border-red-500/30'
+                                : risk.severity === 'high'
+                                ? 'bg-orange-500/10 border-orange-500/30'
+                                : risk.severity === 'medium'
+                                ? 'bg-yellow-500/10 border-yellow-500/30'
+                                : 'bg-[#38FF5D]/10 border-[#38FF5D]/30'
+                            }`}
                           >
-                            <p className="text-sm font-medium">{risk.description}</p>
+                            <p className="text-sm font-medium text-white">{risk.description}</p>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                {risk.type}
-                              </Badge>
-                              <span className="text-xs">
+                              <span className="text-xs text-white/60">
                                 Etki: {risk.impact_score}/10
                               </span>
                             </div>
@@ -329,13 +352,95 @@ export default function SprintDashboardPage({
               </Card>
             )}
 
+            {/* Google Calendar Integration */}
+            <Card className="bg-black border-white/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Image 
+                    src="/Google_Calendar_icon_(2015-2020).svg" 
+                    alt="Google Calendar" 
+                    width={24} 
+                    height={24}
+                    className="w-6 h-6"
+                  />
+                  Google Calendar Entegrasyonu
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60">Durum:</span>
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                      Beklemede
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-white/60">
+                    Sprint etkinliklerini Google Calendar ile senkronize edin
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full border-[#38FF5D]/30 text-[#38FF5D] hover:bg-[#38FF5D]/10"
+                    onClick={() => {
+                      // Mock function - will be implemented later
+                      alert('Görevler Google Calendar\'a gönderiliyor... (Mock)');
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Görevleri Gönder
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Jira Integration */}
+            <Card className="bg-black border-white/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Image 
+                    src="/jira.png" 
+                    alt="Jira" 
+                    width={32} 
+                    height={32}
+                    className="w-8 h-8"
+                  />
+                  Jira Entegrasyonu
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60">Durum:</span>
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                      Beklemede
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-white/60">
+                    Görevleri Jira ile senkronize edin ve takip edin
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full border-[#38FF5D]/30 text-[#38FF5D] hover:bg-[#38FF5D]/10"
+                    onClick={() => {
+                      // Mock function - will be implemented later
+                      alert('Görevler Jira\'ya gönderiliyor... (Mock)');
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Görevleri Gönder
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Recommendations */}
             {(healthData?.analysis?.recommendations ||
               riskData?.analysis?.recommendations) && (
-              <Card>
+              <Card className="bg-black border-white/10">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-blue-500" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <TrendingUp className="h-5 w-5 text-[#38FF5D]" />
                     Öneriler
                   </CardTitle>
                 </CardHeader>
@@ -344,8 +449,8 @@ export default function SprintDashboardPage({
                     {(healthData?.analysis?.recommendations || [])
                       .concat(riskData?.analysis?.recommendations || [])
                       .map((rec: string, i: number) => (
-                        <li key={i} className="text-sm flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
+                        <li key={i} className="text-sm flex items-start gap-2 text-white/80">
+                          <span className="text-[#38FF5D] mt-0.5">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}

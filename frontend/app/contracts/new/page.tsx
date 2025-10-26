@@ -68,20 +68,20 @@ export default function NewContractPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Sözleşme Yükle</h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <h1 className="text-3xl font-bold text-white mb-6">Sözleşme Yükle</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Proje Sözleşmesi Analizi</CardTitle>
+          <CardTitle className="text-white">Proje Sözleşmesi Analizi</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {uploadStatus === 'idle' && (
             <>
-              <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-semibold mb-2">PDF Dosyası Yükleyin</p>
-                <p className="text-sm text-muted-foreground mb-4">
+              <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center">
+                <Upload className="mx-auto h-12 w-12 text-white/60 mb-4" />
+                <p className="text-lg font-semibold mb-2 text-white">PDF Dosyası Yükleyin</p>
+                <p className="text-sm text-white/60 mb-4">
                   Proje sözleşmenizi yükleyin ve AI ile analiz edin
                 </p>
                 <input
@@ -92,31 +92,31 @@ export default function NewContractPage() {
                   id="file-upload"
                 />
                 <label htmlFor="file-upload">
-                  <Button asChild>
+                  <Button asChild className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90">
                     <span>Dosya Seç</span>
                   </Button>
                 </label>
               </div>
 
               {file && (
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-primary" />
+                    <FileText className="h-8 w-8 text-[#38FF5D]" />
                     <div>
-                      <p className="font-semibold">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-semibold text-white">{file.name}</p>
+                      <p className="text-sm text-white/60">
                         {(file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   </div>
-                  <Button onClick={handleUpload}>
+                  <Button onClick={handleUpload} className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90">
                     Yükle ve Analiz Et
                   </Button>
                 </div>
               )}
 
               {errorMessage && (
-                <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg">
+                <div className="flex items-center gap-2 p-4 bg-red-500/20 text-red-400 rounded-lg">
                   <AlertCircle className="h-5 w-5" />
                   <p>{errorMessage}</p>
                 </div>
@@ -126,20 +126,20 @@ export default function NewContractPage() {
 
           {uploadStatus === 'uploading' && (
             <div className="text-center py-8">
-              <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
-              <p className="text-lg font-semibold">Dosya yükleniyor...</p>
-              <p className="text-sm text-muted-foreground">Lütfen bekleyin</p>
+              <Loader2 className="mx-auto h-12 w-12 text-[#38FF5D] animate-spin mb-4" />
+              <p className="text-lg font-semibold text-white">Dosya yükleniyor...</p>
+              <p className="text-sm text-white/60">Lütfen bekleyin</p>
             </div>
           )}
 
           {uploadStatus === 'analyzing' && (
             <div className="text-center py-8">
-              <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
-              <p className="text-lg font-semibold">Sözleşme analiz ediliyor...</p>
-              <p className="text-sm text-muted-foreground mb-2">
+              <Loader2 className="mx-auto h-12 w-12 text-[#38FF5D] animate-spin mb-4" />
+              <p className="text-lg font-semibold text-white">Sözleşme analiz ediliyor...</p>
+              <p className="text-sm text-white/60 mb-2">
                 AI sözleşmenizi inceliyor, görevler oluşturuluyor
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-white/60">
                 ✨ Görevler otomatik olarak uygun çalışanlara atanıyor
               </p>
             </div>
@@ -147,22 +147,22 @@ export default function NewContractPage() {
 
           {uploadStatus === 'success' && (
             <div className="text-center py-8">
-              <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-              <p className="text-lg font-semibold text-green-700">Analiz tamamlandı!</p>
+              <CheckCircle className="mx-auto h-12 w-12 text-[#38FF5D] mb-4" />
+              <p className="text-lg font-semibold text-white">Analiz tamamlandı!</p>
               <div className="space-y-2 mb-4">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-white/60">
                   ✅ {totalTasks} görev oluşturuldu
                 </p>
                 {assignedCount > 0 && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-white/60">
                     👥 {assignedCount} görev otomatik olarak atandı
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-white/60 mt-2">
                   Proje detaylarına yönlendiriliyorsunuz...
                 </p>
               </div>
-              <Button onClick={() => router.push(`/projects/${projectId}`)}>
+              <Button onClick={() => router.push(`/projects/${projectId}`)} className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90">
                 Projeyi Görüntüle
               </Button>
             </div>
@@ -170,10 +170,10 @@ export default function NewContractPage() {
 
           {uploadStatus === 'error' && (
             <div className="text-center py-8">
-              <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-              <p className="text-lg font-semibold text-red-700">Bir hata oluştu</p>
-              <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
-              <Button onClick={() => setUploadStatus('idle')}>
+              <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
+              <p className="text-lg font-semibold text-red-400">Bir hata oluştu</p>
+              <p className="text-sm text-white/60 mb-4">{errorMessage}</p>
+              <Button onClick={() => setUploadStatus('idle')} className="bg-[#38FF5D] text-black hover:bg-[#38FF5D]/90">
                 Tekrar Dene
               </Button>
             </div>
@@ -183,50 +183,50 @@ export default function NewContractPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Nasıl Çalışır?</CardTitle>
+          <CardTitle className="text-white">Nasıl Çalışır?</CardTitle>
         </CardHeader>
         <CardContent>
           <ol className="space-y-3">
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#38FF5D] text-black text-sm font-bold">
                 1
               </span>
               <div>
-                <p className="font-semibold">PDF Yükleyin</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold text-white">PDF Yükleyin</p>
+                <p className="text-sm text-white/60">
                   Proje sözleşmenizi veya iş tanımınızı yükleyin
                 </p>
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#38FF5D] text-black text-sm font-bold">
                 2
               </span>
               <div>
-                <p className="font-semibold">AI Analizi</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold text-white">AI Analizi</p>
+                <p className="text-sm text-white/60">
                   Yapay zeka sözleşmeyi analiz eder, riskleri ve eksikleri tespit eder
                 </p>
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#38FF5D] text-black text-sm font-bold">
                 3
               </span>
               <div>
-                <p className="font-semibold">Görev Oluşturma</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold text-white">Görev Oluşturma</p>
+                <p className="text-sm text-white/60">
                   Otomatik olarak görevler oluşturulur ve teknoloji yığını belirlenir
                 </p>
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#38FF5D] text-black text-sm font-bold">
                 4
               </span>
               <div>
-                <p className="font-semibold">✨ Otomatik Atama (YENİ!)</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-semibold text-white">✨ Otomatik Atama (YENİ!)</p>
+                <p className="text-sm text-white/60">
                   AI, tech stack uyumu ve iş yüküne göre görevleri otomatik olarak en uygun çalışanlara atar
                 </p>
               </div>

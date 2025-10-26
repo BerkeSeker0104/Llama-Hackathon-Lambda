@@ -40,6 +40,17 @@ export interface DashboardData {
   recentActivities: RecentActivity[];
 }
 
+export interface Notification {
+  id: string;
+  type: 'task_assigned' | 'task_completed' | 'task_due_soon' | 'project_update' | 'sprint_reminder' | 'comment';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  priority: 'low' | 'medium' | 'high';
+  link?: string;
+}
+
 // Mock data generator
 export const getMockDashboardData = (): DashboardData => {
   // Generate dates for the last 7 days
@@ -149,5 +160,95 @@ export const getMockDashboardData = (): DashboardData => {
       },
     ],
   };
+};
+
+// Mock notifications data
+export const getMockNotifications = (): Notification[] => {
+  return [
+    {
+      id: '1',
+      type: 'task_assigned',
+      title: 'Yeni Görev Atandı',
+      message: 'API dokümantasyonu görevi size atandı',
+      timestamp: '5 dakika önce',
+      read: false,
+      priority: 'high',
+      link: '/projects/1/tasks',
+    },
+    {
+      id: '2',
+      type: 'task_due_soon',
+      title: 'Yaklaşan Görev',
+      message: 'Database migration görevi 2 saat içinde sona eriyor',
+      timestamp: '1 saat önce',
+      read: false,
+      priority: 'high',
+      link: '/projects/1/tasks',
+    },
+    {
+      id: '3',
+      type: 'task_completed',
+      title: 'Görev Tamamlandı',
+      message: 'Ayşe Demir kullanıcı profil sayfası görevini tamamladı',
+      timestamp: '2 saat önce',
+      read: false,
+      priority: 'medium',
+      link: '/projects/1/tasks',
+    },
+    {
+      id: '4',
+      type: 'project_update',
+      title: 'Proje Güncellemesi',
+      message: 'E-Ticaret Platformu projesi %75 tamamlandı',
+      timestamp: '3 saat önce',
+      read: true,
+      priority: 'medium',
+      link: '/projects/1',
+    },
+    {
+      id: '5',
+      type: 'sprint_reminder',
+      title: 'Sprint Hatırlatıcı',
+      message: 'Sprint 3 yarın başlıyor. Görevlerinizi kontrol edin',
+      timestamp: '5 saat önce',
+      read: true,
+      priority: 'low',
+      link: '/projects/1/sprints',
+    },
+    {
+      id: '6',
+      type: 'comment',
+      title: 'Yeni Yorum',
+      message: 'Mehmet Kaya, kod review işleminize yorum ekledi',
+      timestamp: '6 saat önce',
+      read: true,
+      priority: 'low',
+      link: '/projects/1/tasks',
+    },
+    {
+      id: '7',
+      type: 'task_assigned',
+      title: 'Yeni Görev Atandı',
+      message: 'UI komponenti refactor görevi size atandı',
+      timestamp: '1 gün önce',
+      read: true,
+      priority: 'medium',
+      link: '/projects/2/tasks',
+    },
+    {
+      id: '8',
+      type: 'project_update',
+      title: 'Risk Uyarısı',
+      message: 'Mobil Uygulama Geliştirme projesi risk altında',
+      timestamp: '2 gün önce',
+      read: true,
+      priority: 'high',
+      link: '/projects/3',
+    },
+  ];
+};
+
+export const getUnreadNotificationCount = (notifications: Notification[]): number => {
+  return notifications.filter(n => !n.read).length;
 };
 

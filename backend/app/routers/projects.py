@@ -12,7 +12,9 @@ _db_client = None
 def get_db():
     global _db_client
     if _db_client is None:
+        print("[Projects Router] Creating FirebaseDatabase instance...")
         _db_client = FirebaseDatabase()
+        print("[Projects Router] FirebaseDatabase instance created")
     return _db_client
 
 class ProjectAnalysisRequest(BaseModel):
@@ -32,27 +34,41 @@ class TaskGenerationResponse(BaseModel):
     tasks: List[Dict[str, Any]]
 
 @router.get("/")
-async def get_projects():
+def get_projects():
     """
     Tüm projeleri listele.
     """
     try:
+        logger.info("Starting get_projects endpoint")
+        
         # Tools'a dependency injection yap
-        inject_dependencies(get_db(), "api_session")
+        db_instance = get_db()
+        inject_dependencies(db_instance, "api_session")
+        
+        logger.info("Dependencies injected, calling list_projects tool")
         
         # list_projects tool'unu çağır (LangChain tool - .invoke() kullan)
         result = list_projects.invoke({})
+        
+        logger.info(f"list_projects tool returned: {type(result)}")
+        
         import json
-        return json.loads(result)
+        parsed_result = json.loads(result)
+        
+        logger.info("Successfully parsed result, returning response")
+        return parsed_result
         
     except Exception as e:
+        logger.error(f"Error in get_projects: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Proje listesi getirme hatası: {str(e)}")
 
 
 # --- ÖNEMLİ: Özel path'leri /{project_id} catch-all'dan ÖNCE tanımla ---
 
 @router.get("/{project_id}/risk-analysis")
-async def get_project_risk_analysis(project_id: str):
+def get_project_risk_analysis(project_id: str):
     """
     Proje için gecikme riski analizi yapar.
     """
@@ -83,7 +99,7 @@ async def get_project_risk_analysis(project_id: str):
 
 
 @router.get("/{project_id}/calendar-view")
-async def get_project_calendar_view(project_id: str):
+def get_project_calendar_view(project_id: str):
     """
     Projenin tüm sprint ve görevlerini takvim formatında getirir.
     """
@@ -168,7 +184,7 @@ async def get_project_calendar_view(project_id: str):
 
 
 @router.get("/{project_id}")
-async def get_project(project_id: str):
+def get_project(project_id: str):
     """
     Belirli bir projenin detaylarını getir.
     """
@@ -192,7 +208,7 @@ async def get_project(project_id: str):
         raise HTTPException(status_code=500, detail=f"Proje detayı getirme hatası: {str(e)}")
 
 @router.post("/analyze", response_model=ProjectAnalysisResponse)
-async def analyze_project(request: ProjectAnalysisRequest):
+def analyze_project(request: ProjectAnalysisRequest):
     """
     Proje dokümanını analiz et.
     """
@@ -214,7 +230,7 @@ async def analyze_project(request: ProjectAnalysisRequest):
         raise HTTPException(status_code=500, detail=f"Proje analiz hatası: {str(e)}")
 
 @router.post("/{project_id}/generate-tasks", response_model=TaskGenerationResponse)
-async def generate_tasks(project_id: str):
+def generate_tasks(project_id: str):
     """
     Projeden görev listesi oluştur.
     """
@@ -233,7 +249,7 @@ async def generate_tasks(project_id: str):
         raise HTTPException(status_code=500, detail=f"Görev oluşturma hatası: {str(e)}")
 
 @router.put("/{project_id}/active")
-async def set_active_project(project_id: str):
+def set_active_project(project_id: str):
     """
     Aktif projeyi ayarla.
     """
@@ -252,7 +268,7 @@ async def set_active_project(project_id: str):
         raise HTTPException(status_code=500, detail=f"Aktif proje ayarlama hatası: {str(e)}")
 
 @router.delete("/{project_id}")
-async def delete_project(project_id: str):
+def delete_project(project_id: str):
     """
     Projeyi sil.
     """

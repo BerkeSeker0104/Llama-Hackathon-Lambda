@@ -12,13 +12,13 @@ export function ProjectProgressList({ projects }: ProjectProgressListProps) {
   const getStatusColor = (status: ProjectProgress['status']) => {
     switch (status) {
       case 'on-track':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-[#38FF5D]/20 text-[#38FF5D] border-[#38FF5D]/30';
       case 'at-risk':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'delayed':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-500/20 text-red-400 border-red-500/30';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-white/10 text-white/60 border-white/20';
     }
   };
 
@@ -36,18 +36,18 @@ export function ProjectProgressList({ projects }: ProjectProgressListProps) {
   };
 
   return (
-    <Card>
+    <Card className="bg-black border-white/10">
       <CardHeader>
-        <CardTitle>Proje İlerlemeleri</CardTitle>
-        <CardDescription>Aktif projelerin tamamlanma durumu</CardDescription>
+        <CardTitle className="text-white">Proje İlerlemeleri</CardTitle>
+        <CardDescription className="text-white/60">Aktif projelerin tamamlanma durumu</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {projects.map((project, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className="text-sm font-semibold">{project.name}</h4>
-                <p className="text-xs text-muted-foreground">{project.department}</p>
+                <h4 className="text-sm font-semibold text-white">{project.name}</h4>
+                <p className="text-xs text-white/60">{project.department}</p>
               </div>
               <Badge className={getStatusColor(project.status)} variant="outline">
                 {getStatusText(project.status)}
@@ -55,9 +55,9 @@ export function ProjectProgressList({ projects }: ProjectProgressListProps) {
             </div>
             <div className="flex items-center gap-2">
               <Progress value={project.progress} className="flex-1" />
-              <span className="text-sm font-medium w-12 text-right">{project.progress}%</span>
+              <span className="text-sm font-medium w-12 text-right text-white">{project.progress}%</span>
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs text-white/60">
               <Calendar className="h-3 w-3" />
               <span>Bitiş: {project.dueDate}</span>
             </div>

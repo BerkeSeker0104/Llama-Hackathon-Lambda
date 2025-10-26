@@ -121,14 +121,25 @@ class FirebaseDatabase(BaseDatabase):
     
     def list_projects(self) -> List[Dict[str, Any]]:
         """Tüm projeleri listeler."""
-        projects = []
-        docs = self.db.collection("projects").stream()
-        
-        for doc in docs:
-            project_data = doc.to_dict()
-            projects.append(project_data)
-        
-        return projects
+        try:
+            print("[FirebaseDB] Starting list_projects query...")
+            projects = []
+            
+            # Use get() instead of stream() for better error handling
+            docs = self.db.collection("projects").get()
+            print(f"[FirebaseDB] Query returned {len(docs)} documents")
+            
+            for doc in docs:
+                project_data = doc.to_dict()
+                projects.append(project_data)
+            
+            print(f"[FirebaseDB] Retrieved {len(projects)} projects")
+            return projects
+        except Exception as e:
+            print(f"[FirebaseDB ERROR] list_projects failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
     
     def set_active_project(self, session_id: str, project_id: str):
         """Aktif projeyi ayarlar."""

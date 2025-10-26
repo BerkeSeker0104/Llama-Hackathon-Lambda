@@ -19,6 +19,7 @@ dist/
 # Firebase credentials (IMPORTANT!)
 firebase-credentials.json
 *-credentials.json
+*firebase-adminsdk*.json
 
 # IDE
 .vscode/

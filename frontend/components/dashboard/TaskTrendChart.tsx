@@ -10,30 +10,37 @@ interface TaskTrendChartProps {
 
 export function TaskTrendChart({ data }: TaskTrendChartProps) {
   return (
-    <Card>
+    <Card className="bg-black border-white/10">
       <CardHeader>
-        <CardTitle>Görev Trendi</CardTitle>
-        <CardDescription>Son 7 günlük görev oluşturma ve tamamlanma durumu</CardDescription>
+        <CardTitle className="text-white">Görev Trendi</CardTitle>
+        <CardDescription className="text-white/60">Son 7 günlük görev oluşturma ve tamamlanma durumu</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+            <XAxis dataKey="date" tick={{ fill: '#ffffff60' }} />
+            <YAxis tick={{ fill: '#ffffff60' }} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#1a1a1a', 
+                border: '1px solid #ffffff1a',
+                borderRadius: '8px',
+                color: '#ffffff'
+              }} 
+            />
             <Legend />
             <Line 
               type="monotone" 
               dataKey="completed" 
-              stroke="#10b981" 
+              stroke="#38FF5D" 
               strokeWidth={2}
               name="Tamamlanan"
             />
             <Line 
               type="monotone" 
               dataKey="created" 
-              stroke="#3b82f6" 
+              stroke="#00A8FF" 
               strokeWidth={2}
               name="Oluşturulan"
             />

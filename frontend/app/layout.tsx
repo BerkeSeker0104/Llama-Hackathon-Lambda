@@ -1,14 +1,14 @@
+'use client';
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
-import Link from 'next/link';
-import Image from 'next/image';
-
-export const metadata: Metadata = {
-  title: "Tella - Proje Yöneticisi AI Asistanı",
-  description: "Yapay zeka destekli proje analizi, görev yönetimi ve kaynak tahsisi",
-};
+import { Sidebar } from '@/components/Sidebar';
+import { NotificationHeader } from '@/components/NotificationHeader';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function RootLayout({
   children,
@@ -19,37 +19,49 @@ export default function RootLayout({
     <html lang="tr">
       <body className="antialiased">
         <Providers>
-          <nav className="border-b">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-3">
-                  <Image 
-                    src="/tella_logo.png" 
-                    alt="Tella Logo" 
-                    width={150} 
-                    height={40}
-                    className="h-8 w-auto"
-                    priority
-                  />
-                </Link>
-                <div className="flex gap-4">
-                  <Link href="/" className="hover:text-primary transition">
-                    Dashboard
-                  </Link>
-                  <Link href="/projects" className="hover:text-primary transition">
-                    Projeler
-                  </Link>
-                  <Link href="/chat" className="hover:text-primary transition">
-                    Sohbet
-                  </Link>
-                  <Link href="/employees" className="hover:text-primary transition">
-                    Çalışanlar
-                  </Link>
+          <div className="flex h-screen bg-black overflow-hidden">
+            <Sidebar />
+            
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Header */}
+              <header className="bg-black border-b border-white/10 px-8 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1 max-w-2xl">
+                    <div className="relative flex-1">
+                      <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                      <Input 
+                        placeholder="Search projects, tasks, or team members..." 
+                        className="pl-10 bg-black border-white/10 text-white placeholder:text-white/40"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <NotificationHeader />
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-9 h-9">
+                        <AvatarImage src="/woman-1254454_1280.jpg" alt="Ceren Arın" />
+                        <AvatarFallback className="bg-[#38FF5D] text-black">
+                          CA
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-white">
+                        <div className="text-sm font-medium">Ceren Arın</div>
+                        <div className="text-xs text-white/60">Project Manager</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </header>
+
+              {/* Main Content */}
+              <main className="flex-1 overflow-y-auto p-8">
+                <div className="max-w-[1800px] mx-auto">
+                  {children}
+                </div>
+              </main>
             </div>
-          </nav>
-          {children}
+          </div>
           <Toaster />
         </Providers>
       </body>
