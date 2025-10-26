@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { employeesApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Users } from 'lucide-react';
 
-export default function DepartmentWorkloadPage({ params }: { params: { department: string } }) {
+export default function DepartmentWorkloadPage({ params }: { params: Promise<{ department: string }> }) {
+  const { department } = use(params);
+  
   const { data: employees, isLoading } = useQuery({
-    queryKey: ['employees', params.department],
+    queryKey: ['employees', department],
     queryFn: async () => {
-      const response = await employeesApi.getByDepartment(params.department);
+      const response = await employeesApi.getByDepartment(department);
       return response.data;
     },
   });
@@ -46,7 +49,7 @@ export default function DepartmentWorkloadPage({ params }: { params: { departmen
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold">{params.department} Departmanı</h1>
+        <h1 className="text-3xl font-bold">{department} Departmanı</h1>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-8">

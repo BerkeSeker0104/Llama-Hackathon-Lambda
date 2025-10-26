@@ -7,6 +7,10 @@ class EmployeeBase(BaseModel):
     role: str
     techStack: List[str]
     currentWorkload: str
+    availability_status: Optional[str] = "available"  # available, unavailable, limited
+    unavailable_until: Optional[str] = None  # ISO date
+    unavailable_reason: Optional[str] = None
+    current_task_ids: Optional[List[str]] = []
 
 class EmployeeCreate(EmployeeBase):
     department: str

@@ -5,7 +5,13 @@ from app.firebase_db import FirebaseDatabase
 from app.tools import inject_dependencies, classify_change_request
 
 router = APIRouter()
-db_client = FirebaseDatabase()
+
+_db_client = None
+def get_db():
+    global _db_client
+    if _db_client is None:
+        _db_client = FirebaseDatabase()
+    return _db_client
 
 class ChangeRequestRequest(BaseModel):
     change_text: str
@@ -32,7 +38,7 @@ async def get_change_requests(project_id: str):
     Projeye ait değişiklik taleplerini listele.
     """
     try:
-        changes = db_client.get_change_requests(project_id)
+        changes = get_db().get_change_requests(project_id)
         return {"change_requests": changes}
         
     except Exception as e:
@@ -44,7 +50,7 @@ async def get_change_request(project_id: str, change_id: str):
     Belirli bir değişiklik talebinin detaylarını getir.
     """
     try:
-        changes = db_client.get_change_requests(project_id)
+        changes = get_db().get_change_requests(project_id)
         change = next((c for c in changes if c.get("change_id") == change_id), None)
         
         if not change:
@@ -62,10 +68,13 @@ async def classify_change(request: ChangeRequestRequest):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # classify_change_request tool'unu çağır
-        result = classify_change_request(request.change_text, request.project_id)
+        # classify_change_request tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = classify_change_request.invoke({
+            "change_text": request.change_text,
+            "project_id": request.project_id
+        })
         import json
         result_data = json.loads(result)
         
@@ -84,7 +93,7 @@ async def apply_change(request: ChangeApplyRequest):
     """
     try:
         # Değişiklik talebini al
-        change_ref = db_client.db.collection('change_requests').document(request.change_id)
+        change_ref = get_db().db.collection('change_requests').document(request.change_id)
         change_doc = change_ref.get()
         
         if not change_doc.exists:
@@ -129,7 +138,7 @@ async def apply_change(request: ChangeApplyRequest):
         if request.action in ["extend_timeline", "descope"]:
             # Sprint replan yap
             from app.tools import replan_sprints
-            inject_dependencies(db_client, "api_session")
+            inject_dependencies(get_db(), "api_session")
             
             delays = classification.get("timeline_impact_days", 0) if request.action == "extend_timeline" else 0
             vacation_days = 0
@@ -157,7 +166,7 @@ async def update_change_status(change_id: str, status: str):
     """
     try:
         # Değişiklik talebini güncelle
-        change_ref = db_client.db.collection('change_requests').document(change_id)
+        change_ref = get_db().db.collection('change_requests').document(change_id)
         change_doc = change_ref.get()
         
         if not change_doc.exists:
@@ -177,7 +186,7 @@ async def delete_change_request(change_id: str):
     """
     try:
         # Değişiklik talebini sil
-        db_client.db.collection('change_requests').document(change_id).delete()
+        get_db().db.collection('change_requests').document(change_id).delete()
         
         return {"message": f"Değişiklik talebi silindi: {change_id}"}
         

@@ -1,14 +1,14 @@
 from llama_cloud_services import LlamaParse
-import os
+from app.config import LLAMAPARSE_API_KEY
 
 class LlamaParseService:
     """
     LlamaParse service - EXACT implementation from prototype Cell 3
     """
     def __init__(self):
-        self.api_key = os.getenv("LLAMA_CLOUD_API_KEY")
+        self.api_key = LLAMAPARSE_API_KEY
         if not self.api_key:
-            print("Uyarı: LLAMA_CLOUD_API_KEY bulunamadı. Lütfen .env dosyanızı kontrol edin.")
+            print("Uyarı: LLAMAPARSE_API_KEY bulunamadı. Lütfen .env dosyanızı kontrol edin.")
             self.api_key = None
         
         self.parser = LlamaParse(

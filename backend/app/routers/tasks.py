@@ -2,10 +2,16 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from app.firebase_db import FirebaseDatabase
-from app.tools import inject_dependencies, list_tasks, assign_task_to_employee
+from app.tools import inject_dependencies, list_tasks, assign_task_to_employee, reassign_task_to_employee, get_available_employees_for_task
 
 router = APIRouter()
-db_client = FirebaseDatabase()
+
+_db_client = None
+def get_db():
+    global _db_client
+    if _db_client is None:
+        _db_client = FirebaseDatabase()
+    return _db_client
 
 class TaskAssignmentRequest(BaseModel):
     task_title: str
@@ -24,10 +30,10 @@ async def get_tasks(project_id: Optional[str] = None):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # list_tasks tool'unu çağır
-        result = list_tasks(project_id)
+        # list_tasks tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = list_tasks.invoke({"project_id": project_id})
         import json
         return json.loads(result)
         
@@ -41,7 +47,7 @@ async def get_task(task_id: str):
     """
     try:
         # Task'ı bul
-        tasks_ref = db_client.db.collection('tasks').where('task_id', '==', task_id).stream()
+        tasks_ref = get_db().db.collection('tasks').where('task_id', '==', task_id).stream()
         tasks = [doc.to_dict() for doc in tasks_ref]
         
         if not tasks:
@@ -59,10 +65,13 @@ async def assign_task(request: TaskAssignmentRequest):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # assign_task_to_employee tool'unu çağır
-        result = assign_task_to_employee(request.task_title, request.project_id)
+        # assign_task_to_employee tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = assign_task_to_employee.invoke({
+            "task_title": request.task_title,
+            "project_id": request.project_id
+        })
         import json
         result_data = json.loads(result)
         
@@ -81,7 +90,7 @@ async def update_task_status(task_id: str, status: str):
     """
     try:
         # Task'ı bul ve güncelle
-        task_ref = db_client.db.collection('tasks').where('task_id', '==', task_id).stream()
+        task_ref = get_db().db.collection('tasks').where('task_id', '==', task_id).stream()
         tasks = [doc for doc in task_ref]
         
         if not tasks:
@@ -103,7 +112,7 @@ async def delete_task(task_id: str):
     """
     try:
         # Task'ı bul ve sil
-        task_ref = db_client.db.collection('tasks').where('task_id', '==', task_id).stream()
+        task_ref = get_db().db.collection('tasks').where('task_id', '==', task_id).stream()
         tasks = [doc for doc in task_ref]
         
         if not tasks:
@@ -116,3 +125,98 @@ async def delete_task(task_id: str):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Görev silme hatası: {str(e)}")
+
+
+# --- NEW DYNAMIC SPRINT MANAGEMENT ENDPOINTS ---
+
+class TaskReassignmentRequest(BaseModel):
+    task_title: str
+    from_employee_id: str
+    reason: str
+    project_id: Optional[str] = None
+
+
+class TaskDatesUpdate(BaseModel):
+    task_id: str
+    project_id: str
+    start_date: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+@router.post("/reassign")
+async def reassign_task(request: TaskReassignmentRequest):
+    """
+    Görevi acil durumda başka çalışana atar.
+    """
+    try:
+        # Tools'a dependency injection yap
+        inject_dependencies(get_db(), "api_session")
+        
+        # reassign_task_to_employee tool'unu çağır
+        result = reassign_task_to_employee.invoke({
+            "task_title": request.task_title,
+            "from_employee_id": request.from_employee_id,
+            "reason": request.reason,
+            "project_id": request.project_id
+        })
+        
+        import json
+        result_data = json.loads(result)
+        
+        if "error" in result_data:
+            raise HTTPException(status_code=400, detail=result_data["error"])
+        
+        return result_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Görev yeniden atama hatası: {str(e)}")
+
+
+@router.put("/dates")
+async def update_task_dates(data: TaskDatesUpdate):
+    """
+    Görev tarihlerini günceller.
+    """
+    try:
+        get_db().update_task_dates(
+            task_id=data.task_id,
+            project_id=data.project_id,
+            start_date=data.start_date,
+            due_date=data.due_date
+        )
+        
+        return {"message": "Görev tarihleri başarıyla güncellendi"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Görev tarihleri güncelleme hatası: {str(e)}")
+
+
+@router.get("/available-assignees")
+async def get_available_assignees(task_title: str, project_id: Optional[str] = None):
+    """
+    Belirli bir görev için müsait çalışanları listeler.
+    """
+    try:
+        # Tools'a dependency injection yap
+        inject_dependencies(get_db(), "api_session")
+        
+        # get_available_employees_for_task tool'unu çağır
+        result = get_available_employees_for_task.invoke({
+            "task_title": task_title,
+            "project_id": project_id
+        })
+        
+        import json
+        result_data = json.loads(result)
+        
+        if "error" in result_data:
+            raise HTTPException(status_code=400, detail=result_data["error"])
+        
+        return result_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müsait çalışanları listeleme hatası: {str(e)}")

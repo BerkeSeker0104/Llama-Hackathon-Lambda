@@ -81,3 +81,24 @@ class BaseDatabase(ABC):
     def list_contracts(self) -> List[Dict[str, Any]]:
         """Tüm sözleşmeleri listeler."""
         pass
+    
+    # --- SPRINT METHODS (NEW) ---
+    @abstractmethod
+    def save_sprint(self, project_id: str, sprint_data: Dict[str, Any]):
+        """Sprint planını kaydeder."""
+        pass
+    
+    @abstractmethod
+    def get_sprints(self, project_id: str) -> List[Dict[str, Any]]:
+        """Projeye ait tüm sprintleri getirir."""
+        pass
+    
+    @abstractmethod
+    def get_sprint(self, sprint_id: str) -> Optional[Dict[str, Any]]:
+        """Sprint verisini getirir."""
+        pass
+    
+    @abstractmethod
+    def update_sprint_status(self, sprint_id: str, status: str):
+        """Sprint durumunu günceller."""
+        pass

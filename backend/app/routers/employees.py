@@ -3,10 +3,16 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import uuid
 from app.firebase_db import FirebaseDatabase
-from app.tools import inject_dependencies, list_employees, get_employee_info, get_department_workload
+from app.tools import inject_dependencies, list_employees, get_employee_info, get_department_workload, update_employee_availability
 
 router = APIRouter()
-db_client = FirebaseDatabase()
+
+_db_client = None
+def get_db():
+    global _db_client
+    if _db_client is None:
+        _db_client = FirebaseDatabase()
+    return _db_client
 
 class EmployeeResponse(BaseModel):
     id: str
@@ -30,10 +36,10 @@ async def get_employees(department: Optional[str] = None):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # list_employees tool'unu çağır
-        result = list_employees(department)
+        # list_employees tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = list_employees.invoke({"department": department})
         import json
         return json.loads(result)
         
@@ -47,10 +53,10 @@ async def get_employee(employee_id: str):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # get_employee_info tool'unu çağır
-        result = get_employee_info(employee_id)
+        # get_employee_info tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = get_employee_info.invoke({"employee_id": employee_id})
         import json
         result_data = json.loads(result)
         
@@ -69,10 +75,10 @@ async def get_department_workload(department: str):
     """
     try:
         # Tools'a dependency injection yap
-        inject_dependencies(db_client, "api_session")
+        inject_dependencies(get_db(), "api_session")
         
-        # get_department_workload tool'unu çağır
-        result = get_department_workload(department)
+        # get_department_workload tool'unu çağır (LangChain tool - .invoke() kullan)
+        result = get_department_workload.invoke({"department": department})
         import json
         result_data = json.loads(result)
         
@@ -111,7 +117,7 @@ async def import_employees(csv_data: str):
             employees.append(employee)
         
         # Şirket yapısını güncelle
-        company_data = db_client.get_company_structure()
+        company_data = get_db().get_company_structure()
         if not company_data:
             # Yeni şirket yapısı oluştur
             company_data = {
@@ -141,7 +147,7 @@ async def import_employees(csv_data: str):
         
         # Yapıyı güncelle
         company_data["companyStructure"]["departments"] = list(departments.values())
-        db_client.save_company_structure(company_data)
+        get_db().save_company_structure(company_data)
         
         return {"message": f"{len(employees)} çalışan başarıyla içe aktarıldı"}
         
@@ -155,7 +161,7 @@ async def update_employee_workload(employee_id: str, workload: str):
     """
     try:
         # Çalışanı bul ve güncelle
-        company_data = db_client.get_company_structure()
+        company_data = get_db().get_company_structure()
         if not company_data:
             raise HTTPException(status_code=404, detail="Şirket yapısı bulunamadı")
         
@@ -165,10 +171,67 @@ async def update_employee_workload(employee_id: str, workload: str):
                 for employee in team.get("employees", []):
                     if employee["id"] == employee_id:
                         employee["currentWorkload"] = workload
-                        db_client.save_company_structure(company_data)
+                        get_db().save_company_structure(company_data)
                         return {"message": f"Çalışan iş yükü güncellendi: {workload}"}
         
         raise HTTPException(status_code=404, detail="Çalışan bulunamadı")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Çalışan iş yükü güncelleme hatası: {str(e)}")
+
+
+# --- NEW DYNAMIC SPRINT MANAGEMENT ENDPOINTS ---
+
+class EmployeeAvailabilityUpdate(BaseModel):
+    status: str  # available, unavailable, limited
+    unavailable_until: Optional[str] = None  # ISO date
+    reason: Optional[str] = None
+
+
+@router.put("/{employee_id}/availability")
+async def update_availability(employee_id: str, data: EmployeeAvailabilityUpdate):
+    """
+    Çalışan müsaitlik durumunu günceller.
+    """
+    try:
+        # Tools'a dependency injection yap
+        inject_dependencies(get_db(), "api_session")
+        
+        # update_employee_availability tool'unu çağır
+        result = update_employee_availability.invoke({
+            "employee_id": employee_id,
+            "status": data.status,
+            "unavailable_until": data.unavailable_until,
+            "reason": data.reason
+        })
+        
+        import json
+        result_data = json.loads(result)
+        
+        if "error" in result_data:
+            raise HTTPException(status_code=400, detail=result_data["error"])
+        
+        return result_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müsaitlik güncelleme hatası: {str(e)}")
+
+
+@router.get("/{employee_id}/tasks")
+async def get_employee_tasks(employee_id: str):
+    """
+    Bir çalışanın aktif görevlerini getirir.
+    """
+    try:
+        tasks = get_db().get_employee_tasks(employee_id)
+        
+        return {
+            "employee_id": employee_id,
+            "total_tasks": len(tasks),
+            "tasks": tasks
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Çalışan görevleri getirme hatası: {str(e)}")

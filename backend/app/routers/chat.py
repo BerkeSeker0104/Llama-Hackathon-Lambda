@@ -2,16 +2,29 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import uuid
-from app.orchestrator import ChatOrchestrator
+from app.get_orchestrator() import ChatOrchestrator
 from app.groq_client import GroqAgent
 from app.firebase_db import FirebaseDatabase
 
 router = APIRouter()
 
-# Initialize components
-db_client = FirebaseDatabase()
-agent_client = GroqAgent()
-orchestrator = ChatOrchestrator(db_client=db_client, agent_client=agent_client)
+# Lazy loading
+_db_client = None
+_agent_client = None
+_get_orchestrator() = None
+
+def get_db():
+    global _db_client
+    if _db_client is None:
+        _db_client = FirebaseDatabase()
+    return _db_client
+
+def get_orchestrator():
+    global _orchestrator, _agent_client
+    if _orchestrator is None:
+        _agent_client = GroqAgent()
+        _orchestrator = ChatOrchestrator(db_client=get_db(), agent_client=_agent_client)
+    return _orchestrator
 
 class ChatMessage(BaseModel):
     message: str
@@ -31,7 +44,7 @@ async def chat_with_ai(chat_message: ChatMessage):
         session_id = chat_message.session_id or f"session_{uuid.uuid4().hex[:8]}"
         
         # Orchestrator ile mesajı işle
-        ai_response = orchestrator.handle_message(session_id, chat_message.message)
+        ai_response = get_orchestrator().handle_message(session_id, chat_message.message)
         
         return ChatResponse(
             response=ai_response,

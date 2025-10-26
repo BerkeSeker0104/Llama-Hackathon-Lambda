@@ -14,6 +14,8 @@ export default function NewContractPage() {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [projectId, setProjectId] = useState('');
+  const [assignedCount, setAssignedCount] = useState(0);
+  const [totalTasks, setTotalTasks] = useState(0);
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -28,6 +30,8 @@ export default function NewContractPage() {
     onSuccess: (data) => {
       setUploadStatus('success');
       setProjectId(data.project_id);
+      setAssignedCount(data.assigned_count || 0);
+      setTotalTasks(data.total_tasks || 0);
       setTimeout(() => {
         router.push(`/projects/${data.project_id}`);
       }, 2000);
@@ -132,8 +136,11 @@ export default function NewContractPage() {
             <div className="text-center py-8">
               <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
               <p className="text-lg font-semibold">Sözleşme analiz ediliyor...</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-2">
                 AI sözleşmenizi inceliyor, görevler oluşturuluyor
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ✨ Görevler otomatik olarak uygun çalışanlara atanıyor
               </p>
             </div>
           )}
@@ -142,9 +149,19 @@ export default function NewContractPage() {
             <div className="text-center py-8">
               <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
               <p className="text-lg font-semibold text-green-700">Analiz tamamlandı!</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Proje detaylarına yönlendiriliyorsunuz...
-              </p>
+              <div className="space-y-2 mb-4">
+                <p className="text-sm text-muted-foreground">
+                  ✅ {totalTasks} görev oluşturuldu
+                </p>
+                {assignedCount > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    👥 {assignedCount} görev otomatik olarak atandı
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mt-2">
+                  Proje detaylarına yönlendiriliyorsunuz...
+                </p>
+              </div>
               <Button onClick={() => router.push(`/projects/${projectId}`)}>
                 Projeyi Görüntüle
               </Button>
@@ -208,9 +225,9 @@ export default function NewContractPage() {
                 4
               </span>
               <div>
-                <p className="font-semibold">Kaynak Tahsisi</p>
+                <p className="font-semibold">✨ Otomatik Atama (YENİ!)</p>
                 <p className="text-sm text-muted-foreground">
-                  Görevler otomatik olarak uygun çalışanlara atanır
+                  AI, tech stack uyumu ve iş yüküne göre görevleri otomatik olarak en uygun çalışanlara atar
                 </p>
               </div>
             </li>

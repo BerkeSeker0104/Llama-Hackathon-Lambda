@@ -5,11 +5,13 @@ from app.services.groq_service import GroqService
 from app.firebase_db import FirebaseDatabase
 from app.orchestrator import ChatOrchestrator
 from app.groq_client import GroqAgent
+from app.routers import sprints, contracts, projects, tasks, employees
 from pydantic import BaseModel
 from typing import Optional
 import tempfile
 import os
 import uuid
+import json
 from datetime import datetime
 
 app = FastAPI(
@@ -39,7 +41,14 @@ except Exception as e:
     print(f"[Main ERROR] Service initialization failed: {e}")
     raise
 
-# --- Pydantic Models ---
+# Include routers
+app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
+app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
+app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
+app.include_router(sprints.router, prefix="/api/sprints", tags=["sprints"])
+app.include_router(contracts.router, prefix="/api/contracts", tags=["contracts"])
+
+# Pydantic Models
 
 class ChatRequest(BaseModel):
     message: str
@@ -49,7 +58,7 @@ class ChatResponse(BaseModel):
     response: str
     session_id: str
 
-# --- ROOT ENDPOINT ---
+# ROOT ENDPOINT
 
 @app.get("/")
 async def root():
@@ -59,140 +68,33 @@ async def root():
         "features": [
             "PDF Parsing (LlamaParse)",
             "Project Analysis (Llama 4 Scout)",
+            "Critical Analysis (Eksikler, Riskler, Çelişkiler)",
             "Task Generation (Llama 4 Maverick)",
             "Auto-Assignment (Llama 4 Maverick)",
-            "Chat Orchestrator"
-        ]
+            "Sprint Planning (Llama 4 Maverick)",
+            "Dynamic Sprint Revision (Tatil, Gecikme Yönetimi)",
+            "Chat Orchestrator (12 Tools)"
+        ],
+        "ai_models": {
+            "analysis": "meta-llama/llama-4-scout-17b-16e-instruct",
+            "task_generation": "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "assignment": "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "sprint_planning": "meta-llama/llama-4-maverick-17b-128e-instruct"
+        }
     }
 
-# --- CONTRACT ENDPOINTS (PROTOTIP WORKFLOW) ---
-
-@app.post("/api/contracts/upload-and-analyze")
-async def upload_and_analyze_contract(file: UploadFile = File(...)):
-    """
-    PROTOTIP WORKFLOW (EXACT):
-    1. PDF upload
-    2. LlamaParse parse (Cell 3)
-    3. Groq analyze (Cell 6)
-    4. Save to Firebase
-    
-    Demo PDF: 4-Mesut_Kara_Mobil_Uygulama_Sozlesmesi.pdf
-    """
-    if file.content_type != "application/pdf":
-        raise HTTPException(400, "Only PDF files are allowed")
-    
-    # Save to temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        content = await file.read()
-        tmp.write(content)
-        tmp_path = tmp.name
-    
-    try:
-        print(f"[API] Processing PDF: {file.filename}")
-        
-        # Step 1: Parse with LlamaParse (EXACT prototype Cell 3)
-        parsed_text = llamaparse.parse_pdf(tmp_path)
-        
-        # Step 2: Analyze with Groq (EXACT prototype Cell 6)
-        analysis = groq_service.analyze_project(parsed_text)
-        
-        # Step 3: Save to Firebase
-        contract_id = f"contract_{uuid.uuid4().hex[:8]}"
-        db.save_contract(contract_id, {
-            "contract_name": file.filename,
-            "parsed_text": parsed_text,
-            "analysis": analysis,
-            "status": "analyzed",
-            "created_at": datetime.utcnow().isoformat()
-        })
-        
-        print(f"[API] Contract analyzed successfully: {contract_id}")
-        
-        return {
-            "contract_id": contract_id,
-            "analysis": analysis,
-            "message": "Contract analyzed successfully",
-            "parsed_text_length": len(parsed_text)
-        }
-        
-    except Exception as e:
-        print(f"[API ERROR] Contract analysis failed: {e}")
-        raise HTTPException(500, f"Analysis failed: {str(e)}")
-    
-    finally:
-        # Cleanup temp file
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+# CONTRACT ENDPOINTS
+# Note: Contract endpoints moved to routers/contracts.py
+# All contract operations are now handled by the contracts router
 
 
-@app.post("/api/contracts/{contract_id}/generate-tasks")
-async def generate_tasks_from_contract(contract_id: str):
-    """
-    PROTOTIP WORKFLOW (EXACT):
-    1. Get contract analysis
-    2. Generate tasks with Groq (Cell 9)
-    3. Save tasks to Firebase
-    """
-    contract = db.get_contract(contract_id)
-    if not contract:
-        raise HTTPException(404, "Contract not found")
-    
-    try:
-        print(f"[API] Generating tasks for contract: {contract_id}")
-        
-        # Generate tasks (EXACT prototype Cell 9)
-        tasks = groq_service.generate_tasks(contract["analysis"])
-        
-        # Save tasks
-        project_id = f"project_{uuid.uuid4().hex[:8]}"
-        db.save_project(project_id, contract["analysis"])
-        db.save_tasks(project_id, tasks)
-        
-        print(f"[API] Tasks generated successfully: {len(tasks)} tasks")
-        
-        return {
-            "project_id": project_id,
-            "contract_id": contract_id,
-            "tasks": tasks,
-            "total_tasks": len(tasks),
-            "message": "Tasks generated successfully"
-        }
-        
-    except Exception as e:
-        print(f"[API ERROR] Task generation failed: {e}")
-        raise HTTPException(500, f"Task generation failed: {str(e)}")
-
-
-@app.get("/api/contracts")
-async def list_contracts():
-    """Tüm sözleşmeleri listeler."""
-    try:
-        contracts = db.list_contracts()
-        return {
-            "total_contracts": len(contracts),
-            "contracts": contracts
-        }
-    except Exception as e:
-        raise HTTPException(500, f"Failed to list contracts: {str(e)}")
-
-
-@app.get("/api/contracts/{contract_id}")
-async def get_contract_details(contract_id: str):
-    """Sözleşme detaylarını getirir."""
-    contract = db.get_contract(contract_id)
-    if not contract:
-        raise HTTPException(404, "Contract not found")
-    
-    return contract
-
-
-# --- CHAT ENDPOINT (ORCHESTRATOR) ---
+# CHAT ENDPOINT (ORCHESTRATOR)
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_with_assistant(request: ChatRequest):
     """
-    Orchestrator chat endpoint
-    Uses all 10 tools from prototype
+    Orchestrator chat endpoint.
+    Uses all 10 tools from prototype.
     """
     session_id = request.session_id or f"session_{uuid.uuid4().hex[:8]}"
     
@@ -210,24 +112,25 @@ async def chat_with_assistant(request: ChatRequest):
         raise HTTPException(500, f"Chat failed: {str(e)}")
 
 
-# --- PROJECT ENDPOINTS ---
+# PROJECT ENDPOINTS
 
 @app.get("/api/projects")
 async def list_projects():
-    """Tüm projeleri listeler."""
+    """
+    List all projects.
+    """
     try:
         projects = db.list_projects()
-        return {
-            "total_projects": len(projects),
-            "projects": projects
-        }
+        return projects
     except Exception as e:
         raise HTTPException(500, f"Failed to list projects: {str(e)}")
 
 
 @app.get("/api/projects/{project_id}")
 async def get_project_details(project_id: str):
-    """Proje detaylarını getirir."""
+    """
+    Get project details by ID.
+    """
     project = db.get_project(project_id)
     if not project:
         raise HTTPException(404, "Project not found")
@@ -237,19 +140,168 @@ async def get_project_details(project_id: str):
 
 @app.get("/api/projects/{project_id}/tasks")
 async def get_project_tasks(project_id: str):
-    """Proje görevlerini listeler."""
+    """
+    Get all tasks for a project.
+    """
     try:
         tasks = db.get_tasks(project_id)
-        return {
-            "project_id": project_id,
-            "total_tasks": len(tasks),
-            "tasks": tasks
-        }
+        return tasks
     except Exception as e:
         raise HTTPException(500, f"Failed to get tasks: {str(e)}")
 
 
-# --- HEALTH CHECK ---
+@app.post("/api/tasks/{task_id}/assign")
+async def assign_task_to_best_employee(task_id: str):
+    """
+    Automatically assign a task to the most suitable employee.
+    Uses Llama 4 Maverick to find the best match.
+    """
+    try:
+        # Task'ı bul
+        all_projects = db.list_projects()
+        task = None
+        task_project_id = None
+        
+        for project in all_projects:
+            project_id = project.get("project_id")
+            project_tasks = db.get_tasks(project_id)
+            for t in project_tasks:
+                if t.get("task_id") == task_id:
+                    task = t
+                    task_project_id = project_id
+                    break
+            if task:
+                break
+        
+        if not task:
+            raise HTTPException(404, f"Task not found: {task_id}")
+        
+        # Check if task is already assigned
+        if task.get("assigned_to"):
+            return {
+                "message": "Task already assigned",
+                "task_id": task_id,
+                "assigned_to": task.get("assigned_to")
+            }
+        
+        # Get all employees
+        employees = db.list_employees()
+        
+        if not employees:
+            raise HTTPException(400, "No employees found in database")
+        
+        # Find best employee using Groq
+        from app.tools import TASK_ASSIGNMENT_PROMPT
+        from groq import Groq
+        import os
+        
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        client = Groq(api_key=groq_api_key)
+        
+        user_prompt = f"""
+TASK INFORMATION:
+- Task ID: {task.get('task_id')}
+- Title: {task.get('title', task.get('task_title', 'N/A'))}
+- Detail: {task.get('detail', task.get('task_detail', 'N/A'))}
+- Required Technologies: {task.get('required_stack', task.get('task_stack', []))}
+- Department: {task.get('department', 'N/A')}
+
+AVAILABLE EMPLOYEES:
+{json.dumps(employees, indent=2, ensure_ascii=False)}
+
+Please assign this task to the MOST SUITABLE employee. Respond only in JSON format.
+"""
+        
+        completion = client.chat.completions.create(
+            model="meta-llama/llama-4-maverick-17b-128e-instruct",
+            messages=[
+                {"role": "system", "content": TASK_ASSIGNMENT_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        
+        assignment_result = json.loads(completion.choices[0].message.content)
+        
+        # Find employee information
+        assigned_employee = None
+        for emp in employees:
+            if emp.get("employee_id") == assignment_result.get("assigned_employee_id"):
+                assigned_employee = emp
+                break
+        
+        if not assigned_employee:
+            raise HTTPException(400, f"Employee not found: {assignment_result.get('assigned_employee_id')}")
+        
+        # Update task
+        task["status"] = "assigned"
+        task["assigned_to"] = {
+            "employee_id": assigned_employee.get("employee_id"),
+            "name": assigned_employee.get("name"),
+            "department": assigned_employee.get("department"),
+            "seniority": assigned_employee.get("seniority")
+        }
+        task["assignment_reason"] = assignment_result.get("assignment_reason", "Automatically assigned by AI")
+        
+        # Save to database
+        db.save_tasks(task_project_id, [task])
+        
+        print(f"[API] Task assigned successfully: {task_id} -> {assigned_employee.get('name')}")
+        
+        return {
+            "status": "success",
+            "task_id": task_id,
+            "assigned_to": task["assigned_to"],
+            "assignment_reason": task["assignment_reason"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] Task assignment failed: {e}")
+        raise HTTPException(500, f"Task assignment failed: {str(e)}")
+
+
+# EMPLOYEE ENDPOINTS
+
+@app.get("/api/employees")
+async def list_employees():
+    """
+    List all employees.
+    """
+    try:
+        employees = db.list_employees()
+        return employees
+    except Exception as e:
+        raise HTTPException(500, f"Failed to list employees: {str(e)}")
+
+
+@app.get("/api/employees/{employee_id}")
+async def get_employee_details(employee_id: str):
+    """
+    Get employee details by ID.
+    """
+    employee = db.get_employee(employee_id)
+    if not employee:
+        raise HTTPException(404, "Employee not found")
+    
+    return employee
+
+
+@app.get("/api/employees/department/{department}")
+async def get_employees_by_department(department: str):
+    """
+    Get employees by department.
+    """
+    try:
+        employees = db.get_employees_by_department(department)
+        return employees
+    except Exception as e:
+        raise HTTPException(500, f"Failed to get employees by department: {str(e)}")
+
+
+# HEALTH CHECK
 
 @app.get("/health")
 async def health_check():

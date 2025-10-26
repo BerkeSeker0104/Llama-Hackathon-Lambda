@@ -39,10 +39,49 @@ export const chatApi = {
 
 // Contracts API
 export const contractsApi = {
+  list: () => api.get('/api/contracts'),
+  get: (contractId: string) => api.get(`/api/contracts/${contractId}`),
   upload: (formData: FormData) =>
     api.post('/api/contracts/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-  analyze: (contractId: string) => api.post(`/api/contracts/${contractId}/analyze`),
+  analyze: (contractId: string, autoAssign: boolean = true) => 
+    api.post(`/api/contracts/${contractId}/analyze?auto_assign=${autoAssign}`),
+  autoAssignTasks: (contractId: string) => 
+    api.post(`/api/contracts/${contractId}/auto-assign-tasks`),
+  delete: (contractId: string) => api.delete(`/api/contracts/${contractId}`),
+};
+
+// Sprints API (NEW)
+export const sprintsApi = {
+  list: (projectId: string) => api.get(`/api/sprints/project/${projectId}`),
+  get: (projectId: string, sprintId: string) => api.get(`/api/sprints/${projectId}/${sprintId}`),
+  generate: (projectId: string, duration: number = 2) =>
+    api.post('/api/sprints/generate', { project_id: projectId, sprint_duration_weeks: duration }),
+  replan: (projectId: string, vacationDays: number, delays: number) =>
+    api.post('/api/sprints/replan', { project_id: projectId, vacation_days: vacationDays, delays }),
+  getHealth: (sprintId: string, projectId?: string) =>
+    api.get(`/api/sprints/${sprintId}/health`, { params: { project_id: projectId } }),
+  getCalendarEvents: (sprintId: string) => api.get(`/api/sprints/${sprintId}/calendar-events`),
+};
+
+// Dynamic Sprint Management API (NEW)
+export const dynamicSprintApi = {
+  // Employee availability
+  updateAvailability: (employeeId: string, data: { status: string; unavailable_until?: string; reason?: string }) =>
+    api.put(`/api/employees/${employeeId}/availability`, data),
+  getEmployeeTasks: (employeeId: string) => api.get(`/api/employees/${employeeId}/tasks`),
+  
+  // Task reassignment
+  reassignTask: (data: { task_title: string; from_employee_id: string; reason: string; project_id?: string }) =>
+    api.post('/api/tasks/reassign', data),
+  updateTaskDates: (data: { task_id: string; project_id: string; start_date?: string; due_date?: string }) =>
+    api.put('/api/tasks/dates', data),
+  getAvailableAssignees: (taskTitle: string, projectId?: string) =>
+    api.get('/api/tasks/available-assignees', { params: { task_title: taskTitle, project_id: projectId } }),
+  
+  // Project risk analysis
+  getRiskAnalysis: (projectId: string) => api.get(`/api/projects/${projectId}/risk-analysis`),
+  getCalendarView: (projectId: string) => api.get(`/api/projects/${projectId}/calendar-view`),
 };
 

@@ -19,6 +19,11 @@ class Sprint(SprintBase):
     original_sprint_id: Optional[str] = None
     vacation_days: Optional[int] = None
     delays: Optional[int] = None
+    start_date: Optional[str] = None  # ISO date
+    end_date: Optional[str] = None  # ISO date
+    current_sprint_number: Optional[int] = None
+    risk_factors: Optional[List[Dict[str, Any]]] = []  # {type, severity, description}
+    health_score: Optional[float] = None  # 0-100
     created_at: str
     updated_at: str
     

@@ -7,6 +7,13 @@ class TaskBase(BaseModel):
     task_stack: str
     department: str
     source: str
+    estimated_hours: Optional[int] = None
+    actual_hours: Optional[int] = None
+    blocked_reason: Optional[str] = None
+    priority: Optional[str] = "medium"  # low, medium, high, critical
+    start_date: Optional[str] = None  # ISO date
+    due_date: Optional[str] = None  # ISO date
+    dependencies: Optional[List[str]] = []  # task_id'ler
 
 class TaskCreate(TaskBase):
     project_id: str
@@ -28,7 +35,7 @@ class Task(TaskBase):
     task_attended_to: Optional[str] = None
     assigned_employee_id: Optional[str] = None
     assignment_reason: Optional[str] = None
-    status: str = "pending"
+    status: str = "not_started"  # not_started, in_progress, blocked, completed
     created_at: str
     updated_at: str
     

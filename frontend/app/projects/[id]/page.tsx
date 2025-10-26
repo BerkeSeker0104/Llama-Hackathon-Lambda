@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -8,11 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { ArrowLeft, AlertTriangle, CheckCircle } from 'lucide-react';
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  
   const { data: project, isLoading } = useQuery({
-    queryKey: ['project', params.id],
+    queryKey: ['project', id],
     queryFn: async () => {
-      const response = await projectsApi.get(params.id);
+      const response = await projectsApi.get(id);
       return response.data;
     },
   });
@@ -94,9 +97,14 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             </CardContent>
           </Card>
 
-          <Button asChild className="w-full">
-            <Link href={`/projects/${params.id}/tasks`}>Görevleri Görüntüle</Link>
-          </Button>
+          <div className="grid grid-cols-2 gap-4">
+            <Button asChild>
+              <Link href={`/projects/${id}/tasks`}>Görevleri Görüntüle</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/projects/${id}/sprints`}>Sprint Yönetimi</Link>
+            </Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="analysis" className="space-y-6">

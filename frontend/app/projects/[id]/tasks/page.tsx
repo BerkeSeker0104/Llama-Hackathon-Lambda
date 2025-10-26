@@ -1,21 +1,22 @@
 'use client';
 
+import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, Clock, User } from 'lucide-react';
-import { useState } from 'react';
 
-export default function TasksPage({ params }: { params: { id: string } }) {
+export default function TasksPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const queryClient = useQueryClient();
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
 
   const { data: tasks, isLoading } = useQuery({
-    queryKey: ['tasks', params.id],
+    queryKey: ['tasks', id],
     queryFn: async () => {
-      const response = await tasksApi.list(params.id);
+      const response = await tasksApi.list(id);
       return response.data;
     },
   });
@@ -23,7 +24,7 @@ export default function TasksPage({ params }: { params: { id: string } }) {
   const assignMutation = useMutation({
     mutationFn: (taskId: string) => tasksApi.assign(taskId),
     onSuccess: async (response) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', params.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', id] });
       setAssigningTaskId(null);
       
       // Toast notification
@@ -70,7 +71,7 @@ export default function TasksPage({ params }: { params: { id: string } }) {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/projects/${params.id}`}>
+          <Link href={`/projects/${id}`}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
