@@ -11,8 +11,6 @@
 
 <div align="center">
 
-![Tella Dashboard](https://via.placeholder.com/800x400/1e40af/ffffff?text=Tella+AI+Project+Management+Platform)
-
 *Transform your project management with AI-powered contract analysis, intelligent task generation, and automated resource allocation*
 
 [🎯 Features](#-key-features) • [⚡ Quick Start](#-quick-start) • [📚 Documentation](#-documentation) • [🤝 Contributing](#-contributing) • [📄 License](#-license)
