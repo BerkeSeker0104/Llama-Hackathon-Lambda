@@ -15,6 +15,67 @@ def inject_dependencies(db_instance, session_id: str):
     _db_instance = db_instance
     _session_id = session_id
 
+# --- CHAT CONVERSATION SYSTEM PROMPT ---
+CHAT_CONVERSATION_PROMPT = """
+Sen, deneyimli bir Proje Yöneticisi (Project Manager) olarak görev yapan profesyonel bir AI asistanısın.
+
+KİŞİLİK VE TON:
+- Profesyonel, resmi ve kurumsal dil kullan
+- Her zaman "siz" hitabı kullan
+- Saygılı, yardımsever ama otoriter bir tavır sergile
+- Veriye dayalı, analitik ve stratejik düşün
+- Net, ölçülebilir ve uygulanabilir öneriler sun
+
+YETKİLERİN VE ARAÇLARIN:
+1. Proje ve görev bilgilerini görüntüleme
+2. Çalışan kapasitelerini ve müsaitliğini kontrol etme
+3. Görev ataması önerme (onay sonrası uygulama)
+4. Sprint planlama ve revizyon
+5. Gecikme ve risk analizi
+6. Acil durum yönetimi
+
+KRİTİK AKSIYONLARDA DAVRANIŞ:
+- Görev ataması yapmadan önce MUTLAKA kullanıcıya detaylı bilgi sun ve onay iste
+- Atama önerisinde: kişi adı, gerekçe, alternatifler, potansiyel riskler
+- Kullanıcı onayladıktan sonra aksiyonu gerçekleştir
+- Her adımda şeffaf ol, neden bu kararı verdiğini açıkla
+
+DEMO SENARYOLARI:
+1. **Proje Durumu ve Risk Analizi**: Firebase'den gelen projelerin detaylı analizi, risk değerlendirmesi
+2. **Sprint Planlama ve Revizyon**: Proje bazlı sprint planları, gecikme durumunda revizyon
+3. **Görev Yönetimi ve Atama**: Çalışan bazlı görev atamaları, yeniden atama senaryoları
+4. **Acil Durum Yönetimi**: Çalışan izni/hastalığı durumunda hızlı görev yeniden ataması
+5. **Kaynak ve Performans Analizi**: İş yükü analizi, departman performansı, kapasite planlama
+
+**ÖZEL DEMO DAVRANIŞLARI:**
+- Proje analizi istendiğinde: Gerçek Firebase verilerini kullan, detaylı durum raporu ver
+- Risk analizi istendiğinde: Spesifik riskleri listele, öncelik sırası ve çözüm önerileri sun
+- Sprint planı istendiğinde: Haftalık detaylı plan oluştur, görevleri böl, süre tahminleri ver
+- Görev atama istendiğinde: En uygun kişiyi seç, gerekçe ver, alternatif öneriler sun
+- Acil durum senaryolarında: Hızlı çözüm öner, etki analizi yap, alternatif planlar sun
+
+YANIT FORMATI:
+- Kısa ve öz başlangıç
+- Durum analizi (mevcut veriler)
+- Öneri ve gerekçe
+- Onay gerektiriyorsa açıkça belirt
+- Sonraki adımlar
+
+ÖRNEK YANIT:
+"Mert Koç'un acil durumunu değerlendirdim. Kendisine atanmış 3 aktif görev bulunmaktadır.
+
+**Durum Analizi:**
+- Görev: API Entegrasyonu (kritik, 2 gün içinde teslim)
+- Mert'in müsaitliği: 5 gün boyunca unavailable
+
+**Önerim:**
+Bu görevi Ayşe Demir'e atamayı öneriyorum.
+- Gerekçe: Node.js ve API geliştirme tecrübesi var, iş yükü düşük (low)
+- Alternatif: Can Özdemir (orta iş yükü, aynı ekipte)
+
+Bu atamayı onaylıyor musunuz?"
+"""
+
 # --- PROJECT ANALYSIS SYSTEM PROMPT ---
 PROJECT_ANALYSIS_PROMPT = """
 Sen, bir ürün yöneticisi tarafından yazılan kodlama projesi görevlerini (task) analiz eden kıdemli bir teknik analiz uzmanısın.
@@ -478,11 +539,62 @@ Lütfen bu görevi EN UYGUN çalışana ata. Sadece JSON formatında yanıt ver.
         
         _db_instance.save_tasks(project_id, tasks)
         
+        # Alternatif adayları bul (top 3)
+        alternatives = []
+        for emp in all_employees[:10]:  # İlk 10 çalışanı kontrol et
+            if emp["id"] != assignment_result["assigned_employee_id"]:
+                # Basit skor hesapla
+                score = 0
+                if emp.get("department") == task.get("department"):
+                    score += 20
+                if emp.get("currentWorkload") == "low":
+                    score += 30
+                elif emp.get("currentWorkload") == "medium":
+                    score += 15
+                
+                # Tech stack uyumu kontrol et
+                emp_techs = emp.get("techStack", [])
+                task_techs = task.get("task_stack", "").split(",") if isinstance(task.get("task_stack"), str) else task.get("task_stack", [])
+                matching_techs = [t.strip() for t in task_techs if t.strip() in emp_techs]
+                if matching_techs:
+                    score += len(matching_techs) * 10
+                
+                alternatives.append({
+                    "id": emp["id"],
+                    "name": f"{emp['firstName']} {emp['lastName']}",
+                    "department": emp.get("department"),
+                    "workload": emp.get("currentWorkload"),
+                    "tech_stack": emp_techs,
+                    "score": score,
+                    "reason": f"Tech stack uyumu: {len(matching_techs)}/{len(task_techs)}, İş yükü: {emp.get('currentWorkload')}"
+                })
+        
+        # Skora göre sırala ve top 3'ü al
+        alternatives.sort(key=lambda x: x["score"], reverse=True)
+        alternatives = alternatives[:3]
+        
+        # Confidence score hesapla
+        confidence_score = 0.8  # Base score
+        if assignment_result["assigned_employee_name"] in [alt["name"] for alt in alternatives[:2]]:
+            confidence_score += 0.1
+        if task.get("department") == assignment_result.get("assigned_employee_department"):
+            confidence_score += 0.1
+        
         return json.dumps({
             "status": "success",
             "task_title": task_title,
             "assigned_to": assignment_result["assigned_employee_name"],
-            "reason": assignment_result["assignment_reason"]
+            "assigned_employee_id": assignment_result["assigned_employee_id"],
+            "reason": assignment_result["assignment_reason"],
+            "confidence_score": min(confidence_score, 1.0),
+            "alternatives": alternatives,
+            "potential_risks": [
+                "Çalışanın mevcut iş yükü artabilir",
+                "Tech stack uyumsuzluğu olabilir",
+                "Departman koordinasyonu gerekebilir"
+            ] if confidence_score < 0.9 else [],
+            "requires_confirmation": False,  # Otomatik atama için onay gerektirme
+            "confirmation_type": "task_assignment"
         }, ensure_ascii=False)
         
     except Exception as e:
@@ -1030,7 +1142,15 @@ Lütfen bu görevi EN UYGUN çalışana ata. Müsaitlik durumunu, tech stack uyu
             "new_assignee_id": result["assigned_employee_id"],
             "reason": result["reassignment_reason"],
             "cascade_risks": result.get("cascade_risks", []),
-            "confidence_score": result.get("confidence_score", 0.0)
+            "confidence_score": result.get("confidence_score", 0.0),
+            "requires_confirmation": True,
+            "confirmation_type": "task_reassignment",
+            "reassignment_details": {
+                "from_employee": from_employee_id,
+                "to_employee": result["assigned_employee_name"],
+                "reason": reason,
+                "urgency": "high" if "acil" in reason.lower() or "emergency" in reason.lower() else "medium"
+            }
         }, ensure_ascii=False)
         
     except Exception as e:

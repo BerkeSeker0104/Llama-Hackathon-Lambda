@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, FolderKanban, Users, ExternalLink } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Users, ExternalLink, MessageCircle } from "lucide-react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -14,6 +14,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/' },
+    { id: 'chat', label: 'Chat', icon: MessageCircle, href: '/chat' },
     { id: 'projects', label: 'Projects', icon: FolderKanban, href: '/projects' },
     { id: 'teams', label: 'Teams', icon: Users, href: '/employees' },
   ];
@@ -47,6 +48,7 @@ export function Sidebar({ className }: SidebarProps) {
           const Icon = item.icon;
           const isActive = pathname === item.href || 
             (item.id === 'dashboard' && pathname === '/') ||
+            (item.id === 'chat' && pathname.startsWith('/chat')) ||
             (item.id === 'projects' && pathname.startsWith('/projects')) ||
             (item.id === 'teams' && pathname.startsWith('/employees'));
           

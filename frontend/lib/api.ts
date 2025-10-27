@@ -35,6 +35,14 @@ export const chatApi = {
   sendMessage: (sessionId: string, message: string) =>
     api.post('/api/chat', { session_id: sessionId, message }),
   getHistory: (sessionId: string) => api.get(`/api/chat/history/${sessionId}`),
+  confirmAction: (sessionId: string, actionType: string, actionData: any, confirmed: boolean) => 
+    api.post('/api/chat/confirm-action', { 
+      session_id: sessionId, 
+      action_type: actionType, 
+      action_data: actionData, 
+      confirmed 
+    }),
+  getCategories: () => api.get('/api/chat/categories'),
 };
 
 // Contracts API

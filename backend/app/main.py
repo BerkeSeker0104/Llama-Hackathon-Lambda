@@ -5,9 +5,9 @@ from app.services.groq_service import GroqService
 from app.firebase_db import FirebaseDatabase
 from app.orchestrator import ChatOrchestrator
 from app.groq_client import GroqAgent
-from app.routers import sprints, contracts, projects, tasks, employees
+from app.routers import sprints, contracts, projects, tasks, employees, chat
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 import tempfile
 import os
 import uuid
@@ -47,6 +47,7 @@ app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
 app.include_router(sprints.router, prefix="/api/sprints", tags=["sprints"])
 app.include_router(contracts.router, prefix="/api/contracts", tags=["contracts"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 # Pydantic Models
 
@@ -57,6 +58,8 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+    requires_confirmation: Optional[bool] = False
+    confirmation_data: Optional[Dict[str, Any]] = None
 
 # ROOT ENDPOINT
 
@@ -100,11 +103,13 @@ async def chat_with_assistant(request: ChatRequest):
     
     try:
         print(f"[API] Chat request: {request.message[:50]}...")
-        response = orchestrator.handle_message(session_id, request.message)
+        response_data = orchestrator.handle_message(session_id, request.message)
         
         return ChatResponse(
-            response=response,
-            session_id=session_id
+            response=response_data.get("response", "Bir sorun oluştu."),
+            session_id=session_id,
+            requires_confirmation=response_data.get("requires_confirmation", False),
+            confirmation_data=response_data.get("confirmation_data", None)
         )
         
     except Exception as e:

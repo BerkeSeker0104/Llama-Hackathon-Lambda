@@ -93,19 +93,27 @@ CRITICAL RULES:
 4. Separate tasks by technical detail level (design, development, test, deployment)
 5. Consider dependencies and sequencing
 
-Output format (JSON array ONLY):
-[
-  {
-    "task_title": "Short and clear task title (e.g., 'User Registration System Development')",
-    "task_detail": "DETAILED description of the work to be done in this task. Should include: What will be done, how it will be done, what features it will have, which systems it will integrate with. Write AT LEAST 2-3 sentences.",
-    "task_stack": "Specific technologies, languages, frameworks, libraries to be used in this task (e.g., 'React Native, TypeScript, Redux, AsyncStorage, Firebase Auth')",
-    "source": "Indicate where this task came from: 'Scope Item: [item text]' or 'Acceptance Criterion: [criterion]' or 'Requirement: [requirement]'. Include source text!",
-    "estimated_hours": "Estimated duration (in hours, be realistic)",
-    "priority": "Task priority: 'critical', 'high', 'medium', 'low' (considering dependencies and importance)",
-    "task_attended_to": "",
-    "department": "ONLY one of these departments: 'Backend', 'Frontend', 'Mobile', 'Full-Stack', 'DevOps', 'UI/UX', 'QA'. Use department from project analysis but adapt based on task nature."
-  }
-]
+OUTPUT FORMAT (IMPORTANT):
+You must return a JSON object with a "tasks" key containing an array of task objects, like this:
+{
+  "tasks": [
+    {task object 1},
+    {task object 2},
+    ...
+  ]
+}
+
+Each task object format:
+{
+  "task_title": "Short and clear task title (e.g., 'User Registration System Development')",
+  "task_detail": "DETAILED description of the work to be done in this task. Should include: What will be done, how it will be done, what features it will have, which systems it will integrate with. Write AT LEAST 2-3 sentences.",
+  "task_stack": "Specific technologies, languages, frameworks, libraries to be used in this task (e.g., 'React Native, TypeScript, Redux, AsyncStorage, Firebase Auth')",
+  "source": "Indicate where this task came from: 'Scope Item: [item text]' or 'Acceptance Criterion: [criterion]' or 'Requirement: [requirement]'. Include source text!",
+  "estimated_hours": "Estimated duration (in hours, be realistic)",
+  "priority": "Task priority: 'critical', 'high', 'medium', 'low' (considering dependencies and importance)",
+  "task_attended_to": "",
+  "department": "ONLY one of these departments: 'Backend', 'Frontend', 'Mobile', 'Full-Stack', 'DevOps', 'UI/UX', 'QA'. Use department from project analysis but adapt based on task nature."
+}
 
 TASK CREATION STRATEGY:
 
@@ -154,18 +162,20 @@ AVOID:
 - Tasks without source specified
 
 EXAMPLE OUTPUT:
-[
-  {
-    "task_title": "User Registration and Login System Backend API Development",
-    "task_detail": "RESTful API endpoints to be created: /api/auth/register, /api/auth/login, /api/auth/logout. JWT token-based authentication, password hashing with bcrypt, email verification mechanism, rate limiting (max 5 attempts), session management. PostgreSQL users table design.",
-    "task_stack": "Node.js, Express.js, PostgreSQL, JWT, bcrypt, nodemailer, Redis",
-    "source": "Scope Item: User registration and login operations will be available",
-    "estimated_hours": "24",
-    "priority": "critical",
-    "task_attended_to": "",
-    "department": "Backend"
-  }
-]
+{
+  "tasks": [
+    {
+      "task_title": "User Registration and Login System Backend API Development",
+      "task_detail": "RESTful API endpoints to be created: /api/auth/register, /api/auth/login, /api/auth/logout. JWT token-based authentication, password hashing with bcrypt, email verification mechanism, rate limiting (max 5 attempts), session management. PostgreSQL users table design.",
+      "task_stack": "Node.js, Express.js, PostgreSQL, JWT, bcrypt, nodemailer, Redis",
+      "source": "Scope Item: User registration and login operations will be available",
+      "estimated_hours": "24",
+      "priority": "critical",
+      "task_attended_to": "",
+      "department": "Backend"
+    }
+  ]
+}
 
 FINAL REMINDER:
 - MUST create a task for EACH ITEM in scopeItems!
@@ -282,17 +292,22 @@ Now create a detailed task list!
             # Olası array key'lerini kontrol et
             for key in ['tasks', 'task_list', 'görevler', 'items']:
                 if key in task_list_data and isinstance(task_list_data[key], list):
-                    return task_list_data[key]
+                    tasks = task_list_data[key]
+                    # Her task'ın dict olduğundan emin ol
+                    return [task if isinstance(task, dict) else {} for task in tasks]
             
             # Tek key varsa onun value'sunu döndür
             if len(task_list_data) == 1:
                 value = list(task_list_data.values())[0]
                 if isinstance(value, list):
-                    return value
+                    return [task if isinstance(task, dict) else {} for task in value]
         
         # Direkt list döndüyse
         if isinstance(task_list_data, list):
-            return task_list_data
+            # Her task'ın dict olduğundan emin ol
+            return [task if isinstance(task, dict) else {} for task in task_list_data]
         
         # Fallback
+        print(f"[GroqService] Task generation failed: Unexpected format: {type(task_list_data)}")
+        print(f"[GroqService] Data: {task_list_data}")
         return []

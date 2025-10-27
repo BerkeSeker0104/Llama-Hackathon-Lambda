@@ -48,6 +48,11 @@ def _auto_assign_task_to_employee(task: Dict[str, Any], all_employees: List[Dict
         Atama bilgileri veya None
     """
     try:
+        # Task'ın dict olduğundan emin ol
+        if not isinstance(task, dict):
+            print(f"[Auto Assign] Task dict değil: {type(task)}")
+            return None
+        
         user_prompt = f"""
 GÖREV BİLGİLERİ:
 - Başlık: {task.get('task_title')}
@@ -266,6 +271,21 @@ async def analyze_uploaded_contract(contract_id: str, auto_assign: bool = True):
             
             # Tasklar oluştur
             tasks = groq_service.generate_tasks(analysis)
+            
+            # Task'ların düzgün formatını kontrol et ve filtrele
+            valid_tasks = []
+            for task in tasks:
+                if isinstance(task, dict) and task.get("task_title"):
+                    valid_tasks.append(task)
+                else:
+                    print(f"[Contract Analysis] Geçersiz task formatı atlandı: {task}")
+            
+            tasks = valid_tasks
+            
+            if not tasks:
+                raise HTTPException(status_code=500, detail="Hiç geçerli task oluşturulamadı")
+            
+            print(f"[Contract Analysis] {len(tasks)} geçerli task oluşturuldu")
             
             # Projeyi kaydet
             project_id = f"project_{uuid.uuid4().hex[:8]}"

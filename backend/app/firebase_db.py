@@ -12,37 +12,71 @@ class FirebaseDatabase(BaseDatabase):
     Project ID: lambda-59fe8
     """
     def __init__(self):
-        if not firebase_admin._apps:
-            # Initialize Firebase Admin SDK
-            cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+        self._db = None
+        self._bucket = None
+        self._initialized = False
+        print("[FirebaseDB Info] FirebaseDatabase instance created (lazy loading)")
+    
+    def _ensure_initialized(self):
+        """Firebase'i lazy loading ile initialize et"""
+        if self._initialized:
+            return
             
-            if cred_path and os.path.exists(cred_path):
-                # Use JSON file
-                print(f"[FirebaseDB] Using credentials from file: {cred_path}")
-                cred = credentials.Certificate(cred_path)
-            else:
-                # Use environment variables (for deployment)
-                cred_dict = {
-                    "type": "service_account",
-                    "project_id": os.getenv("FIREBASE_PROJECT_ID", "lambda-59fe8"),
-                    "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
-                    "private_key": os.getenv("FIREBASE_PRIVATE_KEY", "").replace("\\n", "\n"),
-                    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
-                    "client_id": os.getenv("FIREBASE_CLIENT_ID"),
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
-                }
-                cred = credentials.Certificate(cred_dict)
-            firebase_admin.initialize_app(cred, {
-                'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET", "lambda-59fe8.firebasestorage.app")
-            })
-            print("[FirebaseDB Info] Firebase initialized for project: lambda-59fe8")
-        
-        self.db = firestore.client()
-        self.bucket = storage.bucket()
-        print("[FirebaseDB Info] FirebaseDatabase başlatıldı.")
+        try:
+            if not firebase_admin._apps:
+                # Initialize Firebase Admin SDK
+                cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+                
+                if cred_path and os.path.exists(cred_path):
+                    # Use JSON file
+                    print(f"[FirebaseDB] Using credentials from file: {cred_path}")
+                    cred = credentials.Certificate(cred_path)
+                else:
+                    # Use local JSON file as fallback
+                    local_cred_path = "lambda-59fe8-firebase-adminsdk-fbsvc-bb2aa6fa47.json"
+                    if os.path.exists(local_cred_path):
+                        print(f"[FirebaseDB] Using local credentials file: {local_cred_path}")
+                        cred = credentials.Certificate(local_cred_path)
+                    else:
+                        # Use environment variables (for deployment)
+                        cred_dict = {
+                            "type": "service_account",
+                            "project_id": os.getenv("FIREBASE_PROJECT_ID", "lambda-59fe8"),
+                            "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+                            "private_key": os.getenv("FIREBASE_PRIVATE_KEY", "").replace("\\n", "\n"),
+                            "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+                            "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                            "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
+                        }
+                        cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred, {
+                    'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET", "lambda-59fe8.firebasestorage.app")
+                })
+                print("[FirebaseDB Info] Firebase initialized for project: lambda-59fe8")
+            
+            self._db = firestore.client()
+            self._bucket = storage.bucket()
+            self._initialized = True
+            print("[FirebaseDB Info] FirebaseDatabase başlatıldı.")
+            
+        except Exception as e:
+            print(f"[FirebaseDB Error] Firebase initialization failed: {e}")
+            raise e
+    
+    @property
+    def db(self):
+        if not self._initialized:
+            self._ensure_initialized()
+        return self._db
+    
+    @property
+    def bucket(self):
+        if not self._initialized:
+            self._ensure_initialized()
+        return self._bucket
     
     # --- CHAT HISTORY METHODS ---
     def get_chat_history(self, session_id: str) -> List[Dict[str, Any]]:
