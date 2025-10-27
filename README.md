@@ -69,7 +69,6 @@
 - **🎯 Skill Matching:** Tech stack-based employee matching
 - **📊 Workload Tracking:** Low/Medium/High workload indicators
 - **📈 Department Analytics:** Department-wise workload distribution
-
 ### 💬 **AI Chat Interface**
 - **🔧 12-Tool Integration:** Project, task, sprint, and employee queries
 - **🌐 Natural Language Processing:** Turkish language command understanding
